@@ -57,11 +57,11 @@ def create_vector_store(_docs, embeddings):
     texts = text_splitter.split_documents(_docs)
     return FAISS.from_documents(texts, embeddings)
 
-def get_ai_response(client, system_prompt, messages, vector_store=None):
-    """Generates a response from the Together AI API, augmented with RAG context if available."""
+def get_ai_response(client, system_prompt, messages, vector_store=None, use_rag=True):
+    """Generates a response, augmented with RAG context if available and enabled."""
     prompt = messages[-1]['content']
     context = ""
-    if vector_store:
+    if vector_store and use_rag:
         docs = vector_store.similarity_search(prompt, k=3)
         context = "\n\n---\n\nContext from uploaded document:\n" + "\n".join([d.page_content for d in docs])
 
@@ -123,11 +123,10 @@ with st.sidebar:
         system_prompt = f"{ai_persona} You are teaching at a {educational_level} level." if educational_level else ai_persona
 
         st.subheader("📝 Generate Content")
-        content_buttons = {"Curriculum": "Generate a comprehensive curriculum.", "Syllabus": "Generate a syllabus.", "Test": "Create a test."}
+        content_buttons = {"Curriculum": "Generate a curriculum.", "Syllabus": "Generate a syllabus.", "Test": "Create a test."}
         for label, prompt in content_buttons.items():
             if st.button(f"Generate {label}"):
                 st.session_state.messages.append({"role": "user", "content": prompt})
-                # RAG context will be added automatically by get_ai_response
                 st.rerun()
 
         st.subheader("📎 Upload & Process Document")
@@ -139,20 +138,17 @@ with st.sidebar:
                         tmp_file.write(uploaded_file.getvalue())
                         tmp_file_path = tmp_file.name
 
-                    if uploaded_file.type == "application/pdf":
-                        loader = PyPDFLoader(tmp_file_path)
-                    else:
-                        loader = TextLoader(tmp_file_path)
-
+                    loader = PyPDFLoader(tmp_file_path) if uploaded_file.type == "application/pdf" else TextLoader(tmp_file_path)
                     docs = loader.load()
                     st.session_state.vector_store = create_vector_store(docs, embeddings)
                     os.remove(tmp_file_path)
-                    st.success("Document processed and ready for Q&A!")
+                    st.success("Document processed!")
 
+        use_rag_toggle = True
         if 'vector_store' in st.session_state:
-            st.success("Document loaded. AI will now use it for context.")
+            use_rag_toggle = st.checkbox("Use Document Context", value=True, key="use_rag")
             if st.button("Generate Questions from Document"):
-                q_prompt = "Based on the provided document context, generate a set of 5-7 diverse questions (e.g., multiple choice, short answer, conceptual) that would be suitable for a test."
+                q_prompt = "Based on the provided document context, generate a set of 5-7 diverse questions..."
                 st.session_state.messages.append({"role": "user", "content": q_prompt})
                 st.rerun()
 
@@ -169,24 +165,22 @@ if 'username' in st.session_state:
         st.session_state.messages.append({"role": "user", "content": prompt})
         st.rerun()
 
-    # Trigger AI response if the last message is from the user
     if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
                 vector_store = st.session_state.get('vector_store')
-                ai_response = get_ai_response(client, system_prompt, st.session_state.messages, vector_store)
+                ai_response = get_ai_response(client, system_prompt, st.session_state.messages, vector_store, use_rag=use_rag_toggle)
                 if ai_response:
                     st.markdown(ai_response)
                     st.session_state.messages.append({"role": "assistant", "content": ai_response})
                     save_chat_history(db, st.session_state.username, st.session_state.messages)
                 else:
-                    st.session_state.messages.pop() # Remove user prompt if AI fails
+                    st.session_state.messages.pop()
 else:
     st.info("Please enter a username in the sidebar to start your session.")
-    st.warning("Please ensure you have set up your Firestore and Together AI credentials in your Streamlit secrets.", icon="🔑")
+    st.warning("Please ensure you have set up your Firestore and Together AI credentials in Streamlit secrets.", icon="🔑")
     st.code("""
-    # In your .streamlit/secrets.toml file:
-
+    # In .streamlit/secrets.toml:
     firestore_key = "{\\"type\\": \\"service_account\\", ...}"
     TOGETHER_API_KEY = "your_api_key_here"
     """)
