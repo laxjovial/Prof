@@ -43,14 +43,26 @@ def load_vector_store_from_gcs(bucket_name, source_blob_prefix, embeddings):
 
         with tempfile.TemporaryDirectory() as temp_dir:
             # Download all parts of the FAISS index from GCS
+
             blobs = list(storage_client.list_blobs(bucket_name, prefix=source_blob_prefix))
             if not blobs:
                 return None # No document found for this user/scope
+
+
+            blobs = storage_client.list_blobs(bucket_name, prefix=source_blob_prefix)
 
             for blob in blobs:
                 file_name = os.path.basename(blob.name)
                 destination_file_path = os.path.join(temp_dir, file_name)
                 blob.download_to_filename(destination_file_path)
+
+
+
+            # Check if index files were downloaded
+            if not os.path.exists(os.path.join(temp_dir, "index.faiss")):
+                print(f"FAISS index not found in GCS at prefix '{source_blob_prefix}'")
+                return None
+
 
             # Load the FAISS index from the temporary directory
             vector_store = FAISS.load_local(temp_dir, embeddings, allow_dangerous_deserialization=True)
@@ -60,6 +72,7 @@ def load_vector_store_from_gcs(bucket_name, source_blob_prefix, embeddings):
     except Exception as e:
         print(f"Failed to load vector store from GCS: {e}")
         return None
+
 
 def get_user_storage_usage_mb(bucket_name: str, username: str) -> float:
     """Calculates the total storage size in MB for a given user's folder in GCS."""
@@ -71,3 +84,4 @@ def get_user_storage_usage_mb(bucket_name: str, username: str) -> float:
     total_size_bytes = sum(blob.size for blob in blobs)
     total_size_mb = total_size_bytes / (1024 * 1024)
     return total_size_mb
+
