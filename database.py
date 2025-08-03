@@ -1,4 +1,7 @@
 
+
+
+
 from google.cloud import firestore
 import json
 import uuid
@@ -93,6 +96,7 @@ def mark_attendance(db: firestore.Client, educator_id: str, date_str: str, prese
     # ... (code is correct)
     pass
 
+
 import streamlit as st
 from google.cloud import firestore
 import json
@@ -128,4 +132,5 @@ def save_chat_history(db: firestore.Client, username: str, messages: list):
     """
     doc_ref = db.collection("chat_histories").document(username)
     doc_ref.set({"messages": messages})
+
 

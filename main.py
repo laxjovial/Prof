@@ -10,6 +10,11 @@ import uuid
 # Local Imports
 import database, ai, rag
 
+
+# Load environment variables
+load_dotenv()
+
+
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from pydantic import BaseModel
 from typing import List
@@ -30,6 +35,7 @@ import rag
 
 # Load environment variables
 load_dotenv()
+
 
 
 app = FastAPI(title="Educational AI Platform API")
@@ -188,6 +194,7 @@ async def grade_submission_endpoint(request: SubmissionRequest, current_user: st
 # ... (other endpoints for classroom, assignments etc. remain)
 # ...
 
+
 app = FastAPI(
     title="Educational AI Platform API",
     description="API for providing AI-powered educational content and chat.",
@@ -284,4 +291,5 @@ async def chat_endpoint(request: ChatRequest):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
 

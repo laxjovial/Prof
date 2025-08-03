@@ -3,6 +3,9 @@ import requests
 from dotenv import load_dotenv
 import os
 
+
+
+
 import datetime
 from collections import defaultdict
 
@@ -112,6 +115,8 @@ else:
     if st.session_state.role == "Student": draw_student_ui()
     elif st.session_state.role == "Educator": draw_educator_ui()
     else: st.error("Invalid user role.")
+
+
 
 import json
 
@@ -241,4 +246,5 @@ if 'username' in st.session_state:
                     st.error("Failed to get response from the backend.")
 else:
     st.info("Please enter a username in the sidebar to start your session.")
+
 
