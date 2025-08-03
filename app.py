@@ -1,16 +1,12 @@
 import streamlit as st
-from together import Together
+import requests
 from dotenv import load_dotenv
 import os
-from google.cloud import firestore
 import json
-import tempfile
 
-# --- Langchain Imports ---
-from langchain_community.vectorstores import FAISS
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.document_loaders import PyPDFLoader, TextLoader
-from langchain_together import TogetherEmbeddings
+# Local Imports
+# The frontend still handles DB history and initialization
+import database
 
 # Load environment variables from .env file
 load_dotenv()
@@ -22,64 +18,30 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("🎓 Educational AI Platform")
+# --- API Configuration ---
+API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
 
-# --- Firestore Connection ---
-@st.cache_resource
-def init_firestore():
+# --- Helper Functions for API calls ---
+def post_to_backend(endpoint: str, data: dict = None, files: dict = None):
+    """Helper function to post data or files to the backend."""
     try:
-        if "firestore_key" in st.secrets:
-            key_dict = json.loads(st.secrets["firestore_key"])
-            db = firestore.Client.from_service_account_info(key_dict)
-            return db
+        url = f"{API_BASE_URL}/{endpoint}"
+        if files:
+            response = requests.post(url, files=files)
         else:
-            st.error("Firestore credentials not found in Streamlit secrets.")
-            st.stop()
-    except Exception as e:
-        st.error(f"Failed to connect to Firestore: {e}")
-        st.stop()
-
-# --- Database Functions ---
-def load_chat_history(db: firestore.Client, username: str):
-    doc_ref = db.collection("chat_histories").document(username)
-    doc = doc_ref.get()
-    return doc.to_dict().get("messages", []) if doc.exists else []
-
-def save_chat_history(db: firestore.Client, username: str, messages: list):
-    doc_ref = db.collection("chat_histories").document(username)
-    doc_ref.set({"messages": messages})
-
-# --- RAG and AI Functions ---
-@st.cache_resource
-def create_vector_store(_docs, embeddings):
-    """Creates a FAISS vector store from documents."""
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
-    texts = text_splitter.split_documents(_docs)
-    return FAISS.from_documents(texts, embeddings)
-
-def get_ai_response(client, system_prompt, messages, vector_store=None, use_rag=True):
-    """Generates a response, augmented with RAG context if available and enabled."""
-    prompt = messages[-1]['content']
-    context = ""
-    if vector_store and use_rag:
-        docs = vector_store.similarity_search(prompt, k=3)
-        context = "\n\n---\n\nContext from uploaded document:\n" + "\n".join([d.page_content for d in docs])
-
-    final_prompt = prompt + context
-
-    try:
-        api_messages = [{"role": "system", "content": system_prompt}] + messages[:-1] + [{"role": "user", "content": final_prompt}]
-        response = client.chat.completions.create(
-            model="meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
-            messages=api_messages
-        )
-        return response.choices[0].message.content
-    except Exception as e:
-        st.error(f"An error occurred with the AI API: {e}")
+            response = requests.post(url, json=data)
+        response.raise_for_status()  # Raises an exception for 4XX/5XX errors
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        st.error(f"Failed to connect to the backend: {e}")
         return None
 
-# --- Main App Logic ---
-db = init_firestore()
+# --- Main App ---
+st.title("🎓 Educational AI Platform")
+
+# --- Firestore Initialization ---
+# The frontend will continue to manage chat history persistence.
+db = database.init_firestore()
 
 # --- Sidebar ---
 with st.sidebar:
@@ -103,49 +65,27 @@ with st.sidebar:
 
     if 'username' in st.session_state:
         st.header("⚙️ Configuration")
-        secret_key = os.getenv("api_key") or st.secrets.get("TOGETHER_API_KEY")
-        if not secret_key:
-            st.warning("Together AI Key not found.")
-            secret_key = st.text_input("Enter your Together AI API Key", type="password", key="api_key_input")
-
-        if secret_key:
-            client = Together(api_key=secret_key)
-            embeddings = TogetherEmbeddings(model="togethercomputer/m2-bert-80M-8k-retrieval", api_key=secret_key)
-        else:
-            st.error("An API Key is required.")
-            st.stop()
-
         st.subheader("🤖 AI Persona")
-        ai_persona = st.text_input("Define AI's expert persona:", "You are a helpful and knowledgeable assistant.", key="persona")
+        st.session_state.ai_persona = st.text_input("Define AI's expert persona:", st.session_state.get("ai_persona", "You are a helpful assistant."))
         st.subheader("📚 Educational Level")
-        educational_level = st.text_input("Specify educational level (optional):", key="level")
-
-        system_prompt = f"{ai_persona} You are teaching at a {educational_level} level." if educational_level else ai_persona
-
-        st.subheader("📝 Generate Content")
-        content_buttons = {"Curriculum": "Generate a curriculum.", "Syllabus": "Generate a syllabus.", "Test": "Create a test."}
-        for label, prompt in content_buttons.items():
-            if st.button(f"Generate {label}"):
-                st.session_state.messages.append({"role": "user", "content": prompt})
-                st.rerun()
+        st.session_state.educational_level = st.text_input("Specify educational level (optional):", st.session_state.get("educational_level", ""))
 
         st.subheader("📎 Upload & Process Document")
         uploaded_file = st.file_uploader("Upload PDF, TXT", type=['pdf', 'txt'])
         if uploaded_file:
             if st.button("Process Document"):
-                with st.spinner("Processing document..."):
-                    with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(uploaded_file.name)[1]) as tmp_file:
-                        tmp_file.write(uploaded_file.getvalue())
-                        tmp_file_path = tmp_file.name
-
-                    loader = PyPDFLoader(tmp_file_path) if uploaded_file.type == "application/pdf" else TextLoader(tmp_file_path)
-                    docs = loader.load()
-                    st.session_state.vector_store = create_vector_store(docs, embeddings)
-                    os.remove(tmp_file_path)
-                    st.success("Document processed!")
+                with st.spinner("Sending document to backend for processing..."):
+                    files = {'file': (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
+                    endpoint = f"upload-document/{st.session_state.username}"
+                    response = post_to_backend(endpoint, files=files)
+                    if response:
+                        st.session_state.doc_id = response.get("doc_id")
+                        st.success(response.get("message"))
+                    else:
+                        st.error("Failed to process document.")
 
         use_rag_toggle = True
-        if 'vector_store' in st.session_state:
+        if 'doc_id' in st.session_state:
             use_rag_toggle = st.checkbox("Use Document Context", value=True, key="use_rag")
             if st.button("Generate Questions from Document"):
                 q_prompt = "Based on the provided document context, generate a set of 5-7 diverse questions..."
@@ -154,8 +94,10 @@ with st.sidebar:
 
 # --- Chat Interface ---
 if 'username' in st.session_state:
+    username = st.session_state.username
+
     if "messages" not in st.session_state:
-        st.session_state.messages = load_chat_history(db, st.session_state.username)
+        st.session_state.messages = database.load_chat_history(db, username)
 
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
@@ -167,20 +109,24 @@ if 'username' in st.session_state:
 
     if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
         with st.chat_message("assistant"):
-            with st.spinner("Thinking..."):
-                vector_store = st.session_state.get('vector_store')
-                ai_response = get_ai_response(client, system_prompt, st.session_state.messages, vector_store, use_rag=use_rag_toggle)
-                if ai_response:
+            with st.spinner("AI is thinking..."):
+                payload = {
+                    "username": username,
+                    "messages": st.session_state.messages,
+                    "persona": st.session_state.ai_persona,
+                    "educational_level": st.session_state.educational_level,
+                    "use_rag": use_rag_toggle,
+                    "doc_id": st.session_state.get("doc_id")
+                }
+                response_data = post_to_backend("chat", data=payload)
+
+                if response_data:
+                    ai_response = response_data.get("content")
                     st.markdown(ai_response)
                     st.session_state.messages.append({"role": "assistant", "content": ai_response})
-                    save_chat_history(db, st.session_state.username, st.session_state.messages)
+                    database.save_chat_history(db, username, st.session_state.messages)
                 else:
-                    st.session_state.messages.pop()
+                    st.session_state.messages.pop() # Remove user prompt if API fails
+                    st.error("Failed to get response from the backend.")
 else:
     st.info("Please enter a username in the sidebar to start your session.")
-    st.warning("Please ensure you have set up your Firestore and Together AI credentials in Streamlit secrets.", icon="🔑")
-    st.code("""
-    # In .streamlit/secrets.toml:
-    firestore_key = "{\\"type\\": \\"service_account\\", ...}"
-    TOGETHER_API_KEY = "your_api_key_here"
-    """)
