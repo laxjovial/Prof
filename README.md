@@ -14,7 +14,7 @@ The application is built with a modern client-server architecture:
 
 - **Dynamic AI Persona & Level**: Configure the AI's persona and educational complexity via the UI.
 - **Persistent User Sessions**: Chat history is saved to Firestore, allowing users to resume sessions.
-- **Retrieval-Augmented Generation (RAG)**: Upload documents (`.pdf`, `.txt`) for the AI to use as a primary, context-aware knowledge source.
+- **Persistent Document Context (RAG)**: Upload documents (`.pdf`, `.txt`) for the AI to use as a primary, context-aware knowledge source. The processed documents are saved to Google Cloud Storage, ensuring they are persistent across sessions.
 - **Granular Control**: Toggle the use of document context (RAG) on or off for any query.
 - **Rich Content Generation**: Create curricula, syllabi, and tests on the fly.
 - **Multipage UI**: A clean, multi-page interface separating the main chat application from the user guide.
@@ -45,6 +45,7 @@ Create a `.env` file for environment variables:
 # .env
 TOGETHER_API_KEY="your_together_ai_key_here"
 API_BASE_URL="http://127.0.0.1:8000"
+GCS_BUCKET_NAME="your-gcs-bucket-name-for-rag-storage"
 ```
 
 Create a `.streamlit/secrets.toml` file for Streamlit secrets (for the frontend to connect to the database):
