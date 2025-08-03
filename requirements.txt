@@ -13,3 +13,5 @@ uvicorn[standard]
 python-multipart
 requests
 google-cloud-storage
+openai
+google-generativeai
