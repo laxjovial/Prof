@@ -1,3 +1,7 @@
+
+
+
+
 import os
 from llm_config import LLM_PROVIDERS
 
@@ -76,3 +80,8 @@ def get_ai_response(
         return f"An error occurred while communicating with the {provider} API. Please check the backend logs."
 
     return "Error: No response from AI."
+
+
+# This file will contain all AI-related functions.
+
+

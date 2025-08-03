@@ -15,3 +15,5 @@ requests
 google-cloud-storage
 openai
 google-generativeai
+google-generativeai
+
