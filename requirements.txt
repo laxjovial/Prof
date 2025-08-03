@@ -8,3 +8,8 @@ langchain-text-splitters
 pypdf
 faiss-cpu
 langchain-together
+fastapi
+uvicorn[standard]
+python-multipart
+requests
+google-cloud-storage
