@@ -1,3 +1,10 @@
 together
 python-dotenv
 streamlit
+google-cloud-firestore
+langchain
+langchain-community
+langchain-text-splitters
+pypdf
+faiss-cpu
+langchain-together
