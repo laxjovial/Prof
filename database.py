@@ -8,10 +8,35 @@ from typing import Dict, List, Optional
 def init_firestore():
     return firestore.Client()
 
+import auth
+
 # --- User & School Management ---
-def get_or_create_user(db: firestore.Client, username: str, role: str) -> Dict:
-    # ... (code is correct)
-    pass
+def get_user(db: firestore.Client, username: str) -> Optional[Dict]:
+    """Retrieves a user document by username."""
+    user_ref = db.collection("users").document(username)
+    user_doc = user_ref.get()
+    if user_doc.exists:
+        return user_doc.to_dict()
+    return None
+
+def get_or_create_user(db: firestore.Client, username: str, role: str, password: str = "password") -> Dict:
+    """Gets a user document, or creates it with a default password if it doesn't exist."""
+    user_ref = db.collection("users").document(username)
+    user_doc = user_ref.get()
+    if user_doc.exists:
+        return user_doc.to_dict()
+    else:
+        # For a real app, you'd have a more robust user creation/password set flow.
+        hashed_password = auth.get_password_hash(password)
+        user_data = {"role": role, "school_id": None, "hashed_password": hashed_password}
+        user_ref.set(user_data)
+        if role == "Educator":
+            db.collection("classrooms").document(username).set({
+                "student_ids": [],
+                "pending_student_ids": [],
+                "join_code": str(uuid.uuid4())
+            })
+        return user_data
 
 def create_school(db: firestore.Client, school_name: str) -> Dict:
     # ... (code is correct)
@@ -62,9 +87,37 @@ def get_assignments_for_educator(db: firestore.Client, educator_id: str) -> List
         assignments.append(assignment_data)
     return assignments
 
+def assign_to_class(db: firestore.Client, educator_id: str, assignment_id: str):
+    """Assigns an assignment to all students in an educator's class."""
+    students = get_students_for_educator(db, educator_id)
+    for student_id in students:
+        db.collection("student_assignments").add({
+            "student_id": student_id,
+            "assignment_id": assignment_id,
+            "status": "assigned"
+        })
+
+def create_assignment(db: firestore.Client, educator_id: str, title: str, description: str, due_date) -> str:
+    """Creates a new assignment, gets its ID, and then assigns it to the class."""
+    assignment_data = {"educator_id": educator_id, "title": title, "description": description, "due_date": due_date}
+    _, assignment_ref = db.collection("assignments").add(assignment_data)
+    assign_to_class(db, educator_id, assignment_ref.id) # Assign to current students
+    return assignment_ref.id
+
 def get_assignments_for_student(db: firestore.Client, student_username: str) -> List[Dict]:
-    # ... (code is correct)
-    pass
+    """Retrieves all assignments for a student via the mapping collection."""
+    student_assignments_query = db.collection("student_assignments").where("student_id", "==", student_username).stream()
+    assignment_ids = [doc.to_dict()['assignment_id'] for doc in student_assignments_query]
+
+    if not assignment_ids:
+        return []
+
+    assignments = []
+    for assignment_id in assignment_ids:
+        assignment = get_assignment(db, assignment_id)
+        if assignment:
+            assignments.append(assignment)
+    return assignments
 
 def get_assignment(db: firestore.Client, assignment_id: str) -> Optional[Dict]:
     """Retrieves a single assignment by its ID."""
