@@ -1,4 +1,3 @@
-
 import os
 from llm_config import LLM_PROVIDERS
 
@@ -6,6 +5,15 @@ from llm_config import LLM_PROVIDERS
 from together import Together
 import openai
 import google.generativeai as genai
+from langchain_together import TogetherEmbeddings
+
+# New function to get embedding client for FastAPI startup
+def get_embedding_client():
+    """Initializes and returns the TogetherEmbeddings client."""
+    api_key = os.getenv("TOGETHER_API_KEY")
+    if not api_key:
+        raise ValueError("TOGETHER_API_KEY not found in environment variables.")
+    return TogetherEmbeddings(model="togethercomputer/m2-bert-80M-8k-retrieval", api_key=api_key)
 
 def get_ai_response(
     provider: str,
@@ -77,4 +85,3 @@ def get_ai_response(
         return f"An error occurred while communicating with the {provider} API. Please check the backend logs."
 
     return "Error: No response from AI."
-
