@@ -21,6 +21,7 @@ This tab is your central hub for managing your students.
 - Select a date, check the boxes next to the students who are present, and click "Submit Attendance" to save the record.
 
 ## 5. AI Tutor Chat
+
 This is your own personal chat interface with the AI. It's a powerful tool for preparing lessons, generating ideas, and exploring topics.
 
 ### How to Prepare a Lesson on Any Topic
@@ -39,6 +40,7 @@ You can continue this process for each part of the lesson plan, building a compl
 ### Other Chat Features
 - **Configure the AI**: Use the sidebar to set the AI's persona and educational level.
 - **Use Documents (RAG)**: Upload your own materials via the "Knowledge Base" to have the AI use them as context for lesson planning.
+
 
 ## 6. Account Management
 - **Storage**: Monitor your personal document storage usage in the sidebar.

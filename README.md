@@ -1,3 +1,4 @@
+
 # Educational AI Platform & Learning Management System (LMS) - Production Version
 
 This project is a sophisticated, multi-component Educational AI Platform architected to function as a full-fledged, multi-tenant Learning Management System (LMS) for individuals, educators, and institutions. It is built with a production-ready, secure, and scalable architecture.
@@ -29,9 +30,11 @@ Create a `.env` file and populate it with your secret keys and configuration:
 # .env
 
 # --- LLM API Keys ---
+
 TOGETHER_API_KEY="your_key_here"
 OPENAI_API_KEY="your_key_here"
 GOOGLE_API_KEY="your_key_here"
+
 
 # --- JWT Secret ---
 # Generate a strong, random string for this in production, e.g., openssl rand -hex 32
@@ -43,14 +46,17 @@ GCS_BUCKET_NAME="your-gcs-bucket-name-for-rag-storage"
 USER_STORAGE_LIMIT_MB="100"
 
 # --- Google Cloud Service Account ---
+
 # Provide the absolute path to your service account key file
 GOOGLE_APPLICATION_CREDENTIALS="/path/to/your/service-account-key.json"
 ```
 
 ### 2. Install Dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
+
 
 ### 3. Run the Application
 You must run the backend and frontend servers in **two separate terminals**.

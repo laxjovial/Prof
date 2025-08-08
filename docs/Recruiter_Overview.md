@@ -2,6 +2,7 @@
 
 ## 1. Project Synopsis
 
+
 This project is a full-stack, AI-powered, multi-tenant Learning Management System (LMS) that showcases a wide range of advanced software engineering and architectural skills. It was evolved from a simple script into a robust, scalable, and feature-rich application with a decoupled frontend and backend, demonstrating an ability to handle complex, evolving requirements.
 
 ## 2. Technical Architecture & Skills Demonstrated

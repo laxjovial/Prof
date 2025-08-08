@@ -7,6 +7,7 @@ Welcome to the Educational AI Platform! This guide will help you get the most ou
 - **Dashboard**: Your main dashboard is split into two tabs: "AI Tutor Chat" and "Assignments".
 
 ## 2. AI Tutor Chat
+
 This is your primary interface for learning.
 
 ### How to Learn Any Topic

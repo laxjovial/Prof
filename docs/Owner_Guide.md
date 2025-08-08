@@ -19,9 +19,11 @@ The application is designed with a modern, decoupled client-server architecture 
     -   **Google Firestore**: A NoSQL database for all metadata (users, schools, classrooms, assignments, etc.).
     -   **Google Cloud Storage (GCS)**: An object store for the persistent storage of RAG vector stores.
 
+
 ## 3. Configuration
 
 ### Environment Variables
+
 
 The backend server requires a `.env` file with the following variables:
 
@@ -37,11 +39,13 @@ The backend server requires a `.env` file with the following variables:
 
 The frontend (`app.py`) uses Streamlit's secrets (`.streamlit/secrets.toml`) to initialize its own independent connection to Firestore for some client-side operations. This should contain the `firestore_key`.
 
+
 ## 4. Maintenance & Deployment
 
 ### Running Locally
 
 You must run the backend and frontend servers in two separate terminals.
+
 
 1.  **Start Backend**:
     ```bash
@@ -70,3 +74,4 @@ You must run the backend and frontend servers in two separate terminals.
 -   **403 Forbidden**: The user associated with the `X-Username` header does not have the required role (e.g., "Educator") for the endpoint.
 -   **413 Payload Too Large**: A user has tried to upload a file that exceeds their storage quota.
 -   **500 Internal Server Error**: Check the backend server logs for tracebacks. Common causes include missing environment variables on startup or errors from external APIs (LLMs, Google Cloud).
+

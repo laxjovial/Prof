@@ -38,23 +38,13 @@ This optional field lets you set the complexity of the AI's language and concept
 
 Simply type your question or prompt into the chat box at the bottom of the screen and press Enter. The AI's response will appear, and the conversation will be saved automatically.
 
+### Generating Content
 
-### Interactive Learning & "Teachings"
+You can ask the AI to generate structured educational content at any time using the buttons in the sidebar. The AI will use your current conversation as context.
 
-The platform creates a dynamic, interactive learning journey through conversation. There is no "Start Course" button; instead, you guide the learning process.
-
-**Step 1: Generate a Learning Plan**
-First, ask the AI to create a roadmap for any topic.
-- *Example Prompt*: `"Create a 5-step learning plan for understanding blockchain technology."`
-The AI will respond with a structured plan (e.g., "1. What is a block?, 2. Cryptographic Hashing..."), which is now saved in your chat history.
-
-**Step 2: Execute the Plan Conversationally**
-Now, you can walk through the plan at your own pace.
-- *Example Prompt*: `"Great, let's start with step 1. Please teach me what a block is."`
-The AI, remembering the plan, will begin the lesson. When you're ready to move on, simply say:
-- *Example Prompt*: `"Okay, I understand. Let's move on to step 2."`
-
-This method allows you to have a fully interactive and self-paced "teaching" session on any topic imaginable.
+-   **Generate Curriculum**: Creates a high-level plan of study for a subject.
+-   **Generate Syllabus**: Creates a more detailed syllabus for a specific course or topic.
+-   **Generate Test**: Creates a test with relevant questions.
 
 ## Using Your Own Documents (RAG)
 

@@ -1,5 +1,6 @@
 # Investor Briefing: The Educational AI Platform
 
+
 ## 1. The Opportunity: The Future of Personalized, Multi-Modal Education
 
 The global EdTech market is rapidly evolving beyond simple content delivery towards integrated, AI-native ecosystems. The demand is for platforms that are personalized, scalable, secure, and flexible. This platform is strategically positioned at the intersection of several key growth areas: AI-driven tutoring, corporate training, and scalable educational infrastructure.
@@ -36,3 +37,4 @@ We are seeking seed funding to accelerate our go-to-market strategy and expand o
 -   **Feature Expansion**: To develop an admin-facing analytics dashboard for monitoring platform-wide usage and growth.
 
 This platform is not just another AI chatbot; it is a comprehensive, scalable, and secure operating system for the future of education.
+
