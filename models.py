@@ -10,6 +10,14 @@ class User(BaseModel):
     role: str
     school_id: Optional[str] = None
 
+# This is the missing model needed for user registration
+class UserCreate(BaseModel):
+    username: str
+    password: str
+    email: Optional[str] = None
+    full_name: Optional[str] = None
+    role: str = "student"  # A default role can be helpful
+
 class UserInDB(User):
     hashed_password: str
 
@@ -34,6 +42,7 @@ class ChatResponse(BaseModel):
 
 class UploadResponse(BaseModel):
     message: str
+    doc_id: str # Added doc_id as it was in the main.py upload endpoint
 
 class AssignmentRequest(BaseModel):
     title: str
