@@ -1,16 +1,12 @@
-
 from google.cloud import firestore
 import json
 import uuid
 from typing import Dict, List, Optional
+import auth
 
-# ... (data model comment) ...
-
+# --- Firestore Initialization ---
 def init_firestore():
     return firestore.Client()
-
-
-import auth
 
 # --- User & School Management ---
 def get_user(db: firestore.Client, username: str) -> Optional[Dict]:
@@ -28,7 +24,6 @@ def get_or_create_user(db: firestore.Client, username: str, role: str, password:
     if user_doc.exists:
         return user_doc.to_dict()
     else:
-        # For a real app, you'd have a more robust user creation/password set flow.
         hashed_password = auth.get_password_hash(password)
         user_data = {"role": role, "school_id": None, "hashed_password": hashed_password}
         user_ref.set(user_data)
@@ -39,7 +34,6 @@ def get_or_create_user(db: firestore.Client, username: str, role: str, password:
                 "join_code": str(uuid.uuid4())
             })
         return user_data
-
 
 def create_school(db: firestore.Client, school_name: str) -> Dict:
     # ... (code is correct)
@@ -78,8 +72,11 @@ def get_documents_for_user(db: firestore.Client, owner_id: str) -> List[Dict]:
 
 # --- Assignment & Attendance ---
 def create_assignment(db: firestore.Client, educator_id: str, title: str, description: str, due_date) -> str:
-    # ... (code is correct)
-    pass
+    """Creates a new assignment, gets its ID, and then assigns it to the class."""
+    assignment_data = {"educator_id": educator_id, "title": title, "description": description, "due_date": due_date}
+    _, assignment_ref = db.collection("assignments").add(assignment_data)
+    assign_to_class(db, educator_id, assignment_ref.id) # Assign to current students
+    return assignment_ref.id
 
 def get_assignments_for_educator(db: firestore.Client, educator_id: str) -> List[Dict]:
     assignments_query = db.collection("assignments").where("educator_id", "==", educator_id).stream()
@@ -90,7 +87,6 @@ def get_assignments_for_educator(db: firestore.Client, educator_id: str) -> List
         assignments.append(assignment_data)
     return assignments
 
-
 def assign_to_class(db: firestore.Client, educator_id: str, assignment_id: str):
     """Assigns an assignment to all students in an educator's class."""
     students = get_students_for_educator(db, educator_id)
@@ -100,13 +96,6 @@ def assign_to_class(db: firestore.Client, educator_id: str, assignment_id: str):
             "assignment_id": assignment_id,
             "status": "assigned"
         })
-
-def create_assignment(db: firestore.Client, educator_id: str, title: str, description: str, due_date) -> str:
-    """Creates a new assignment, gets its ID, and then assigns it to the class."""
-    assignment_data = {"educator_id": educator_id, "title": title, "description": description, "due_date": due_date}
-    _, assignment_ref = db.collection("assignments").add(assignment_data)
-    assign_to_class(db, educator_id, assignment_ref.id) # Assign to current students
-    return assignment_ref.id
 
 def get_assignments_for_student(db: firestore.Client, student_username: str) -> List[Dict]:
     """Retrieves all assignments for a student via the mapping collection."""
@@ -149,29 +138,6 @@ def mark_attendance(db: firestore.Client, educator_id: str, date_str: str, prese
     # ... (code is correct)
     pass
 
-
-
-import streamlit as st
-from google.cloud import firestore
-import json
-
-@st.cache_resource
-def init_firestore():
-    """
-    Initializes a connection to Google Firestore using credentials from Streamlit secrets.
-    """
-    try:
-        if "firestore_key" in st.secrets:
-            key_dict = json.loads(st.secrets["firestore_key"])
-            db = firestore.Client.from_service_account_info(key_dict)
-            return db
-        else:
-            st.error("Firestore credentials not found in Streamlit secrets.")
-            st.stop()
-    except Exception as e:
-        st.error(f"Failed to connect to Firestore: {e}")
-        st.stop()
-
 def load_chat_history(db: firestore.Client, username: str):
     """
     Loads chat history for a given user from Firestore.
@@ -186,5 +152,3 @@ def save_chat_history(db: firestore.Client, username: str, messages: list):
     """
     doc_ref = db.collection("chat_histories").document(username)
     doc_ref.set({"messages": messages})
-
-
