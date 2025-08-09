@@ -127,7 +127,14 @@ class SubmissionRequest(BaseModel):
 class GradeResponse(BaseModel):
     grade: int
     feedback: str
+
+
+
+@app.get("/")
+async def read_root():
+    return {"message": "Welcome to the Educational AI Platform API! Visit /docs for documentation."}    
     
+
 # --- Auth Endpoints ---
 @app.post("/token", response_model=Token)
 async def login_for_access_token(db: ... = Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()):
